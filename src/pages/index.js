@@ -2,7 +2,6 @@ import Menu from "@/components/Menu";
 import React from "react";
 import { GameEngine } from "@/components/GameEngine";
 import Bird from "@/components/Bird";
-import SoundControl from "@/components/SoundControl";
 import { SoundProvider } from "@/components/SoundProvider";
 import ScoreBoard from "@/components/ScoreBoard";
 import Pipes from "@/components/Pipes";
@@ -24,7 +23,6 @@ const Game = () => {
                     <Pipes />
                     <ScoreBoard />
                     <Menu />
-                    <SoundControl />
                 </GameEngine>
             </SoundProvider>
         </div>

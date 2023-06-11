@@ -1,7 +1,6 @@
 import React, { useContext } from "react";
 import Image from "next/image";
-import { birdColors } from "./Bird";
-import { GameContext } from "./GameEngine";
+import { GameContext, birdColors } from "./GameEngine";
 import { SoundContext } from "./SoundProvider";
 
 const ColorSelector = () => {
@@ -30,7 +29,7 @@ const ColorSelector = () => {
                 >
                     <Image
                         className="aspect-square"
-                        src={birdColors[color][0]}
+                        src={birdColors[color]}
                         alt={color}
                         width={birdSize}
                         height={birdSize}

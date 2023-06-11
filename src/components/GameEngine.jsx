@@ -3,15 +3,22 @@ import { SoundContext } from "./SoundProvider";
 
 export const GameContext = createContext();
 
+export const birdColors = {
+    Blue: require("../assets/Bird/Blue.gif"),
+    Red: require("../assets/Bird/Red.gif"),
+    Gray: require("../assets/Bird/Gray.gif"),
+    Yellow: require("../assets/Bird/Yellow.gif"),
+};
+
 export const GameEngine = ({ children }) => {
     const { menuSound, stopMenuSound, gameSound, stopGameSound, breakSound } =
         useContext(SoundContext);
 
     const gravity = 3;
-    const gameSpeed = 15;
     const birdSize = 40;
     const pipeWidth = 100;
 
+    const [gameSpeed, setGameSpeed] = useState(15);
     const [pipeSpeed, setPipeSpeed] = useState(5);
 
     const [gameState, setGameState] = useState(false);
@@ -20,9 +27,9 @@ export const GameEngine = ({ children }) => {
     const [record, setRecord] = useState(0);
 
     const [birdColor, setBirdColor] = useState("Blue");
-    const [birdFrame, setBirdFrame] = useState(1);
     const [birdPositionY, setBirdPositionY] = useState(null);
     const [birdPositionX, setBirdPositionX] = useState(null);
+    const [birdImage, setBirdImage] = useState(birdColors[birdColor]);
 
     const [pipes, setPipes] = useState([]);
 
@@ -31,6 +38,12 @@ export const GameEngine = ({ children }) => {
 
     const gameHeight = windowHeight - (windowHeight * 0.18);
     const jumpHeight = windowHeight - gameHeight;
+
+    const [leaderboardStatus, setLeaderboardStatus] = useState(false);
+
+    const [playerName, setPlayerName] = useState("");
+
+    const [isRecord, setIsRecord] = useState(false);
 
     // Sound effects
     useEffect(() => {
@@ -80,6 +93,7 @@ export const GameEngine = ({ children }) => {
             value={{
                 gravity,
                 gameSpeed,
+                setGameSpeed,
                 birdSize,
                 gameState,
                 setGameState,
@@ -89,8 +103,6 @@ export const GameEngine = ({ children }) => {
                 setRecord,
                 birdColor,
                 setBirdColor,
-                birdFrame,
-                setBirdFrame,
                 birdPositionY,
                 setBirdPositionY,
                 birdPositionX, 
@@ -106,6 +118,14 @@ export const GameEngine = ({ children }) => {
                 pipeSpeed, 
                 setPipeSpeed,
                 jumpHeight,
+                leaderboardStatus, 
+                setLeaderboardStatus,
+                playerName, 
+                setPlayerName,
+                isRecord, 
+                setIsRecord,
+                birdImage, 
+                setBirdImage,
             }}
         >
             {children}

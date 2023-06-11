@@ -1,34 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
-import { GameContext } from "@/components/GameEngine";
+import { GameContext, birdColors } from "@/components/GameEngine";
 import { SoundContext } from "@/components/SoundProvider";
 import Image from "next/image";
-
-export const birdColors = {
-    Blue: [
-        require("../assets/Bird/Blue/frame-1.png"),
-        require("../assets/Bird/Blue/frame-2.png"),
-        require("../assets/Bird/Blue/frame-3.png"),
-        require("../assets/Bird/Blue/frame-4.png"),
-    ],
-    Red: [
-        require("../assets/Bird/Red/frame-1.png"),
-        require("../assets/Bird/Red/frame-2.png"),
-        require("../assets/Bird/Red/frame-3.png"),
-        require("../assets/Bird/Red/frame-4.png"),
-    ],
-    Gray: [
-        require("../assets/Bird/Gray/frame-1.png"),
-        require("../assets/Bird/Gray/frame-2.png"),
-        require("../assets/Bird/Gray/frame-3.png"),
-        require("../assets/Bird/Gray/frame-4.png"),
-    ],
-    Yellow: [
-        require("../assets/Bird/Yellow/frame-1.png"),
-        require("../assets/Bird/Yellow/frame-2.png"),
-        require("../assets/Bird/Yellow/frame-3.png"),
-        require("../assets/Bird/Yellow/frame-4.png"),
-    ],
-};
 
 const Bird = () => {
     const {
@@ -37,8 +10,6 @@ const Bird = () => {
         gameState,
         setGameState,
         birdColor,
-        birdFrame,
-        setBirdFrame,
         birdSize,
         windowHeight,
         gameHeight,
@@ -46,45 +17,32 @@ const Bird = () => {
         setBirdPositionY,
         birdPositionX,
         jumpHeight,
+        setGameSpeed,
+        isRecord,
+        record,
+        playerName,
+        birdImage,
+        setBirdImage,
     } = useContext(GameContext);
 
     const { flapSound, jumpSound, breakSound } = useContext(SoundContext);
 
     const BIRD_IDENTIFIER = "Bird";
-    const birdFlapSpeed = 100;
+    const birdFlapSpeed = 400;
     const birdIdlePosition = gameHeight / 2 - birdSize / 2;
 
     const [birdJumping, setBirdJumping] = useState(false);
 
-    const getImageByFrame = (frame) => {
-        const birdColorFrames = birdColors[birdColor];
-        return birdColorFrames[frame];
-    };
 
     useEffect(() => {
-        const animateBird = () => {
-            setBirdFrame((prevFrame) => {
-                if (prevFrame < 3) {
-                    return prevFrame + 1;
-                }
-                if (gameState) {
-                    flapSound();
-                }
-                return 0;
-            });
-        };
-
-        const animationLoop = () => {
-            animateBird();
-        };
-
-        const animationLoopInterval = setInterval(animationLoop, birdFlapSpeed);
+        const animationLoopInterval = setInterval(flapSound, birdFlapSpeed);
         return () => {
             clearInterval(animationLoopInterval);
         };
-    }, [gameState, flapSound, setBirdFrame]);
+    }, [gameState, flapSound]);
 
     useEffect(() => {
+
         if (!gameState) {
             document
                 .getElementById(BIRD_IDENTIFIER)
@@ -113,36 +71,110 @@ const Bird = () => {
                 setBirdPositionY((birdPositionY) => birdPositionY + gravity);
             }, gameSpeed);
         } else {
-            breakSound();
-            setGameState(false);
-            setBirdPositionY(birdIdlePosition);
+            interval = setInterval(() => {
+                // setBirdPositionY(0);
+                if (gameState) {
+                    const saveRecord = async () => {
+                        console.log("SAVE drop")
+                        try {
+                            const response = await fetch('/api/addLeaderboardData', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    score: record,
+                                    name: playerName
+                                }),
+                            });
+
+                            // if (!response.ok) {
+                            //     throw new Error('Errore durante la chiamata API');
+                            // }
+
+                            const data = await response.json();
+                        } catch (error) {
+                            console.error('Errore durante la chiamata API:', error);
+                        }
+                    };
+
+                    var prevImage = birdImage;
+
+                    breakSound();
+                    setBirdImage(require("@/assets/explode.gif"));
+                    if (isRecord) {
+                        saveRecord();
+                    }
+
+                    setGameSpeed(99999999999999);
+
+                    setTimeout(() => {
+                        setGameState(false);
+                        setGameSpeed(15);
+                        setBirdImage(prevImage);
+                    }, 1000);
+
+
+                } else {
+                    setBirdPositionY(birdIdlePosition);
+                }
+            }, gameSpeed);
+
         }
 
         return () => {
             clearInterval(interval);
         };
-    }, [
-        gameState,
-        setBirdPositionY,
-        birdJumping,
-        birdPositionY,
-        windowHeight,
-        birdSize,
-        gameSpeed,
-        setGameState,
-        gameHeight,
-        gravity,
-        birdIdlePosition,
-        breakSound,
-    ]);
+    }, [gameState, setBirdPositionY, birdJumping, birdPositionY, windowHeight, birdSize, gameSpeed, setGameState, gameHeight, gravity, birdIdlePosition, breakSound, isRecord, setGameSpeed, record, playerName, birdImage, setBirdImage]);
+
+
 
     // jumping animation
     useEffect(() => {
+        const saveRecord = async () => {
+            console.log("SAVE jump")
+
+            try {
+                const response = await fetch('/api/addLeaderboardData', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        score: record,
+                        name: playerName
+                    }),
+                });
+
+                // if (!response.ok) {
+                //     throw new Error('Errore durante la chiamata API');
+                // }
+
+                const data = await response.json();
+            } catch (error) {
+                console.error('Errore durante la chiamata API:', error);
+            }
+        };
+
         const jump = () => {
             let newBirdPosition = birdPositionY - jumpHeight;
+
             if (newBirdPosition < 0) {
+                if (isRecord) {
+                    saveRecord();
+                }
                 setBirdPositionY(0);
-                setGameState(false);
+                var prevImage = birdImage;
+                breakSound();
+                setBirdImage(require("@/assets/explode.gif"));
+                setGameSpeed(99999999999999);
+                setTimeout(() => {
+                    setGameState(false);
+                    setGameSpeed(15);
+                    setBirdImage(prevImage);
+                }, 1000);
+
+
             } else {
                 setBirdJumping(true);
                 setBirdPositionY(newBirdPosition);
@@ -168,7 +200,7 @@ const Bird = () => {
             document.removeEventListener("keydown", handleKeyPress);
             document.removeEventListener("click", jump);
         };
-    });
+    }, [birdImage, birdPositionY, breakSound, gameSpeed, gameState, isRecord, jumpHeight, jumpSound, playerName, record, setBirdImage, setBirdPositionY, setGameSpeed, setGameState]);
 
     return (
         <>
@@ -195,7 +227,8 @@ const Bird = () => {
                 alt="Bird"
                 width={birdSize}
                 height={birdSize}
-                src={getImageByFrame(birdFrame)}
+                // src={getImageByFrame(birdFrame)}
+                src={birdImage}
             />
         </>
     );

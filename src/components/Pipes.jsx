@@ -7,6 +7,7 @@ const Pipes = () => {
         gameState,
         setGameState,
         gameSpeed,
+        setGameSpeed,
         birdPositionY,
         birdPositionX,
         birdSize,
@@ -21,6 +22,11 @@ const Pipes = () => {
         setScore,
         record,
         setRecord,
+        isRecord,
+        setIsRecord,
+        playerName,
+        birdImage,
+        setBirdImage,
     } = useContext(GameContext);
     const { breakSound, pointSound } = useContext(SoundContext);
 
@@ -81,10 +87,7 @@ const Pipes = () => {
                                 pipe.x <= birdRight &&
                                 pipe.x + pipeWidth >= birdPositionX
                             ) {
-                                setGameState(false);
-                                setPipes([]);
-                                breakSound();
-                                clearInterval(gameLoopInterval);
+                                splash();
                             }
                         } else {
                             // questo è il tubo inferiore
@@ -93,18 +96,17 @@ const Pipes = () => {
                                 pipe.x <= birdRight &&
                                 pipe.x + pipeWidth >= birdPositionX
                             ) {
-                                setGameState(false);
-                                setPipes([]);
-                                breakSound();
-                                clearInterval(gameLoopInterval);
+                                splash();
                             }
                             if (
                                 pipe.x + pipeWidth <= birdPositionX &&
                                 !pipe.passed
                             ) {
+
                                 setScore((prevScore) => {
                                     let newScore = prevScore + 1;
                                     if (record < newScore) {
+                                        setIsRecord(true);
                                         setRecord(newScore);
                                     }
                                     return newScore;
@@ -126,31 +128,52 @@ const Pipes = () => {
             }
         };
 
+        const saveRecord = async () => {
+            try {
+                const response = await fetch('/api/addLeaderboardData', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        score: record,
+                        name: playerName
+                    }),
+                });
+
+                // if (!response.ok) {
+                //     throw new Error('Errore durante la chiamata API');
+                // }
+
+                const data = await response.json();
+            } catch (error) {
+                console.error('Errore durante la chiamata API:', error);
+            }
+        };
+
+        const splash = () => {
+            if (isRecord) {
+                saveRecord();
+            }
+            var prevImage = birdImage;
+            breakSound();
+            setBirdImage(require("@/assets/explode.gif"));
+            setGameSpeed(99999999999999);
+            setTimeout(() => {
+                setGameState(false);
+                setGameSpeed(15);
+                setBirdImage(prevImage);
+                // setPipes([]);
+                // clearInterval(gameLoopInterval);
+            }, 1000);
+
+        }
+
         const gameLoopInterval = setInterval(gameLoop, gameSpeed);
         return () => {
             clearInterval(gameLoopInterval);
         };
-    }, [
-        gameSpeed,
-        birdPositionY,
-        birdSize,
-        setPipes,
-        gameState,
-        setGameState,
-        windowHeight,
-        breakSound,
-        windowWidth,
-        pipeWidth,
-        pipeSpeed,
-        jumpHeight,
-        gameHeight,
-        birdPositionX,
-        setScore,
-        record,
-        setRecord,
-        pointSound,
-        pipeGap,
-    ]);
+    }, [gameSpeed, birdPositionY, birdSize, setPipes, gameState, setGameState, windowHeight, breakSound, windowWidth, pipeWidth, pipeSpeed, jumpHeight, gameHeight, birdPositionX, setScore, record, setRecord, pointSound, pipeGap, isRecord, setIsRecord, playerName, setGameSpeed, birdImage, setBirdImage]);
 
     return (
         <>
@@ -173,9 +196,8 @@ const Pipes = () => {
             {pipes.map((pipe) => (
                 <div
                     key={pipe.id}
-                    className={`pipe ${
-                        pipe.top + pipe.height === gameHeight ? "bottom" : ""
-                    }`}
+                    className={`pipe ${pipe.top + pipe.height === gameHeight ? "bottom" : ""
+                        }`}
                     style={{
                         left: `${pipe.x}px`,
                         top: `${pipe.top}px`,
