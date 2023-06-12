@@ -23,6 +23,8 @@ const Bird = () => {
         playerName,
         birdImage,
         setBirdImage,
+        birdExploded,
+        setBirdExploded,
     } = useContext(GameContext);
 
     const { flapSound, jumpSound, breakSound } = useContext(SoundContext);
@@ -32,6 +34,8 @@ const Bird = () => {
     const birdIdlePosition = gameHeight / 2 - birdSize / 2;
 
     const [birdJumping, setBirdJumping] = useState(false);
+    const [birdJumpVelocityY, setBirdJumpVelocityY] = useState(0);
+    const [birdJumpTime, setBirdJumpTime] = useState(0);
 
 
     useEffect(() => {
@@ -65,17 +69,61 @@ const Bird = () => {
         }
 
         let interval;
-
         if (gameState && birdPositionY < gameHeight - birdSize) {
             interval = setInterval(() => {
-                setBirdPositionY((birdPositionY) => birdPositionY + gravity);
+                let newBirdVelocity = birdJumping ? birdJumpVelocityY : gravity; // Utilizza birdJumpVelocityY solo durante il salto
+                setBirdPositionY((birdPositionY) => birdPositionY + newBirdVelocity);
+                if (birdJumping) {
+                    setBirdJumpTime((birdJumpTime) => birdJumpTime + gameSpeed); // Aggiorna il tempo trascorso durante il salto
+                    setBirdJumpVelocityY(
+                        (birdJumpVelocityY) =>
+                            birdJumpVelocityY + gravity * (birdJumpTime / 1000) // Applica un'accelerazione graduale durante il salto
+                    );
+                } else if (birdPositionY <= 0) {
+                    // Se l'uccello colpisce la parte superiore durante il salto
+                    var prevImage = birdImage;
+                    breakSound();
+                    setBirdPositionY(0);
+                    setBirdImage(require("@/assets/explode.gif"));
+                    setBirdExploded(true);
+                    if (isRecord) {
+                        const saveRecord = async () => {
+                            try {
+                                const response = await fetch("/api/addLeaderboardData", {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                        score: record,
+                                        name: playerName,
+                                    }),
+                                });
+
+                                const data = await response.json();
+                            } catch (error) {
+                                console.error("Errore durante la chiamata API:", error);
+                            }
+                        };
+
+                        saveRecord();
+                    }
+
+                    setGameSpeed(99999999999999);
+
+                    setTimeout(() => {
+                        setGameState(false);
+                        setGameSpeed(15);
+                        setBirdImage(prevImage);
+                        setBirdExploded(false);
+                    }, 1000);
+                }
             }, gameSpeed);
         } else {
             interval = setInterval(() => {
                 // setBirdPositionY(0);
                 if (gameState) {
                     const saveRecord = async () => {
-                        console.log("SAVE drop")
                         try {
                             const response = await fetch('/api/addLeaderboardData', {
                                 method: 'POST',
@@ -102,6 +150,7 @@ const Bird = () => {
 
                     breakSound();
                     setBirdImage(require("@/assets/explode.gif"));
+                    setBirdExploded(true);
                     if (isRecord) {
                         saveRecord();
                     }
@@ -112,6 +161,7 @@ const Bird = () => {
                         setGameState(false);
                         setGameSpeed(15);
                         setBirdImage(prevImage);
+                        setBirdExploded(false);
                     }, 1000);
 
 
@@ -125,14 +175,13 @@ const Bird = () => {
         return () => {
             clearInterval(interval);
         };
-    }, [gameState, setBirdPositionY, birdJumping, birdPositionY, windowHeight, birdSize, gameSpeed, setGameState, gameHeight, gravity, birdIdlePosition, breakSound, isRecord, setGameSpeed, record, playerName, birdImage, setBirdImage]);
+    }, [gameState, setBirdPositionY, birdJumping, birdPositionY, windowHeight, birdSize, gameSpeed, setGameState, gameHeight, gravity, birdIdlePosition, breakSound, isRecord, setGameSpeed, record, playerName, birdImage, setBirdImage, setBirdExploded, birdJumpVelocityY, birdJumpTime]);
 
 
 
     // jumping animation
     useEffect(() => {
         const saveRecord = async () => {
-            console.log("SAVE jump")
 
             try {
                 const response = await fetch('/api/addLeaderboardData', {
@@ -156,28 +205,42 @@ const Bird = () => {
             }
         };
 
+        // const jump = () => {
+        //     let newBirdPosition = birdPositionY - jumpHeight;
+        //     if (!birdExploded) {
+        //         if (newBirdPosition < 0) {
+        //             if (isRecord) {
+        //                 saveRecord();
+        //             }
+        //             setBirdPositionY(0);
+        //             var prevImage = birdImage;
+        //             breakSound();
+        //             setBirdExploded(true);
+        //             setBirdImage(require("@/assets/explode.gif"));
+        //             setGameSpeed(99999999999999);
+        //             setTimeout(() => {
+        //                 setGameState(false);
+        //                 setGameSpeed(15);
+        //                 setBirdImage(prevImage);
+        //                 setBirdExploded(false);
+        //             }, 1000);
+
+
+        //         } else {
+        //             setBirdJumping(true);
+        //             setBirdPositionY(newBirdPosition);
+        //             jumpSound();
+        //             setTimeout(() => {
+        //                 setBirdJumping(false);
+        //             }, gameSpeed * 20);
+        //         }
+        //     }
+        // };
         const jump = () => {
-            let newBirdPosition = birdPositionY - jumpHeight;
-
-            if (newBirdPosition < 0) {
-                if (isRecord) {
-                    saveRecord();
-                }
-                setBirdPositionY(0);
-                var prevImage = birdImage;
-                breakSound();
-                setBirdImage(require("@/assets/explode.gif"));
-                setGameSpeed(99999999999999);
-                setTimeout(() => {
-                    setGameState(false);
-                    setGameSpeed(15);
-                    setBirdImage(prevImage);
-                }, 1000);
-
-
-            } else {
+            if (!birdJumping && !birdExploded) {
                 setBirdJumping(true);
-                setBirdPositionY(newBirdPosition);
+                setBirdJumpVelocityY(-jumpHeight / gameSpeed); // Imposta una velocità iniziale negativa per far salire l'uccello gradualmente
+                setBirdJumpTime(0);
                 jumpSound();
                 setTimeout(() => {
                     setBirdJumping(false);
@@ -200,7 +263,7 @@ const Bird = () => {
             document.removeEventListener("keydown", handleKeyPress);
             document.removeEventListener("click", jump);
         };
-    }, [birdImage, birdPositionY, breakSound, gameSpeed, gameState, isRecord, jumpHeight, jumpSound, playerName, record, setBirdImage, setBirdPositionY, setGameSpeed, setGameState]);
+    }, [birdExploded, birdImage, birdJumping, birdPositionY, breakSound, gameSpeed, gameState, isRecord, jumpHeight, jumpSound, playerName, record, setBirdExploded, setBirdImage, setBirdPositionY, setGameSpeed, setGameState]);
 
     return (
         <>
@@ -219,6 +282,7 @@ const Bird = () => {
                   transition: transform 1.5${gameSpeed}s;
                   transform: rotate(70deg);
                 }
+                
               `}
             </style>
             <Image

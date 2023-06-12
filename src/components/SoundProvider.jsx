@@ -10,7 +10,7 @@ export const SoundProvider = ({ children }) => {
 
     const [flapSound, { stop: stopFlapSound }] = useSound(
         "/flappy-bird-assets-master/audio/wing.wav",
-        settings
+        { ...settings, volume: (volume/2)}
     );
     const [breakSound, { stop: stopBreakSound }] = useSound(
         "/flappy-bird-assets-master/audio/hit.wav",
@@ -21,7 +21,7 @@ export const SoundProvider = ({ children }) => {
         settings
     );
     const [menuSound,  { stop: stopMenuSound } ] = useSound(
-        "/sounds/menu.wav",
+        "/sounds/theme.mp3",
         { ...settings, loop: true}
     );
     const [gameSound, { stop: stopGameSound }] = useSound(
@@ -29,7 +29,7 @@ export const SoundProvider = ({ children }) => {
         { ...settings, loop: true}
     );
     const [jumpSound, { stop: stopJumpSound }] = useSound(
-        "/flappy-bird-assets-master/audio/swoosh.wav",
+        "/sounds/jump.wav",
         settings
     );
     const [pointSound, { stop: stopPointSound }] = useSound(

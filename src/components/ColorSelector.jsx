@@ -5,13 +5,14 @@ import { SoundContext } from "./SoundProvider";
 
 const ColorSelector = () => {
 
-    const { birdColor, setBirdColor, birdSize } = useContext(GameContext);
+    const { birdColor, setBirdColor, birdSize, setBirdImage } = useContext(GameContext);
     const { hoverSound } = useContext(SoundContext);
 
     const colors = Object.keys(birdColors);
 
     const handleColorChange = (color) => {
         setBirdColor(color);
+        setBirdImage(birdColors[color]);
     };
 
     return (

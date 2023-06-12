@@ -27,6 +27,8 @@ const Pipes = () => {
         playerName,
         birdImage,
         setBirdImage,
+        birdExploded, 
+        setBirdExploded,
     } = useContext(GameContext);
     const { breakSound, pointSound } = useContext(SoundContext);
 
@@ -44,21 +46,41 @@ const Pipes = () => {
                     Math.random() * (maxPipeHeight - minPipeHeight + 1)
                 ) + minPipeHeight;
 
+            const pipe = {
+                x: pipeX,
+                passed: false,
+                coin: true,
+            }
+
             const upperPipe = {
+                ...pipe,
                 id: Math.random().toString(),
                 top: 0,
                 height: randomHeight,
-                x: pipeX,
-                passed: false,
-            };
+            }
 
             const lowerPipe = {
+                ...pipe,
                 id: Math.random().toString(),
                 top: randomHeight + pipeGap,
                 height: gameHeight - randomHeight - pipeGap,
-                x: pipeX,
-                passed: false,
-            };
+            }
+
+            // const upperPipe = {
+            //     id: Math.random().toString(),
+            //     top: 0,
+            //     height: randomHeight,
+            //     x: pipeX,
+            //     passed: false,
+            // };
+
+            // const lowerPipe = {
+            //     id: Math.random().toString(),
+            //     top: randomHeight + pipeGap,
+            //     height: gameHeight - randomHeight - pipeGap,
+            //     x: pipeX,
+            //     passed: false,
+            // };
 
             setPipes((prevPipes) => [...prevPipes, upperPipe, lowerPipe]);
         };
@@ -99,10 +121,10 @@ const Pipes = () => {
                                 splash();
                             }
                             if (
-                                pipe.x + pipeWidth <= birdPositionX &&
-                                !pipe.passed
+                                pipe.x + (pipeWidth/2) <= birdPositionX &&
+                                pipe.coin
                             ) {
-
+                                pointSound();
                                 setScore((prevScore) => {
                                     let newScore = prevScore + 1;
                                     if (record < newScore) {
@@ -111,9 +133,24 @@ const Pipes = () => {
                                     }
                                     return newScore;
                                 });
-                                pointSound();
                                 pipe.passed = true;
+                                pipe.coin = false;
                             }
+                            // if (
+                            //     pipe.x + pipeWidth <= birdPositionX &&
+                            //     !pipe.passed
+                            // ) {
+
+                            //     setScore((prevScore) => {
+                            //         let newScore = prevScore + 1;
+                            //         if (record < newScore) {
+                            //             setIsRecord(true);
+                            //             setRecord(newScore);
+                            //         }
+                            //         return newScore;
+                            //     });
+                            //     pipe.passed = true;
+                            // }
                         }
                     });
 
@@ -157,12 +194,14 @@ const Pipes = () => {
             }
             var prevImage = birdImage;
             breakSound();
+            setBirdExploded(true);
             setBirdImage(require("@/assets/explode.gif"));
             setGameSpeed(99999999999999);
             setTimeout(() => {
                 setGameState(false);
                 setGameSpeed(15);
                 setBirdImage(prevImage);
+                setBirdExploded(false);
                 // setPipes([]);
                 // clearInterval(gameLoopInterval);
             }, 1000);
@@ -173,7 +212,7 @@ const Pipes = () => {
         return () => {
             clearInterval(gameLoopInterval);
         };
-    }, [gameSpeed, birdPositionY, birdSize, setPipes, gameState, setGameState, windowHeight, breakSound, windowWidth, pipeWidth, pipeSpeed, jumpHeight, gameHeight, birdPositionX, setScore, record, setRecord, pointSound, pipeGap, isRecord, setIsRecord, playerName, setGameSpeed, birdImage, setBirdImage]);
+    }, [gameSpeed, birdPositionY, birdSize, setPipes, gameState, setGameState, windowHeight, breakSound, windowWidth, pipeWidth, pipeSpeed, jumpHeight, gameHeight, birdPositionX, setScore, record, setRecord, pointSound, pipeGap, isRecord, setIsRecord, playerName, setGameSpeed, birdImage, setBirdImage, setBirdExploded]);
 
     return (
         <>
@@ -207,7 +246,7 @@ const Pipes = () => {
                 >
                     {pipe.top + pipe.height === gameHeight && (
                         <div
-                            className={`coin ${pipe.passed ? "hidden" : ""}`}
+                            className={`coin ${pipe.coin ? "" : "hidden"}`}
                         />
                     )}
                 </div>

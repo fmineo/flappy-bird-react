@@ -30,6 +30,7 @@ export const GameEngine = ({ children }) => {
     const [birdPositionY, setBirdPositionY] = useState(null);
     const [birdPositionX, setBirdPositionX] = useState(null);
     const [birdImage, setBirdImage] = useState(birdColors[birdColor]);
+    const [birdExploded, setBirdExploded] = useState(false);
 
     const [pipes, setPipes] = useState([]);
 
@@ -126,6 +127,8 @@ export const GameEngine = ({ children }) => {
                 setIsRecord,
                 birdImage, 
                 setBirdImage,
+                birdExploded, 
+                setBirdExploded,
             }}
         >
             {children}
