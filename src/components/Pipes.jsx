@@ -212,7 +212,7 @@ const Pipes = () => {
         return () => {
             clearInterval(gameLoopInterval);
         };
-    }, [gameSpeed, birdPositionY, birdSize, setPipes, gameState, setGameState, windowHeight, breakSound, windowWidth, pipeWidth, pipeSpeed, jumpHeight, gameHeight, birdPositionX, setScore, record, setRecord, pointSound, pipeGap, isRecord, setIsRecord, playerName, setGameSpeed, birdImage, setBirdImage, setBirdExploded]);
+    });
 
     return (
         <>

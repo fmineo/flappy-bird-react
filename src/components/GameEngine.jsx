@@ -56,7 +56,7 @@ export const GameEngine = ({ children }) => {
             stopGameSound();
             menuSound();
         }
-    }, [gameState, gameSound, menuSound, stopGameSound, stopMenuSound]);
+    }, [gameState]);
 
     // window resize effect
     useEffect(() => {
